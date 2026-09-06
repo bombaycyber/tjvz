@@ -1,6 +1,6 @@
 # tjvz
 
-Local, open-source, interpretable recommendation systems for focused reading. 
+Local, open-source, interpretable recommendation systems for focused reading.
 
 
 ## Anatomy
