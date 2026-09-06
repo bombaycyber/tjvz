@@ -1,6 +1,9 @@
 # tjvz
 
-A local, open-source recommendation system for focused reading.
+A local, open-source, customisable recommendation system for focused reading. 
+
+
+## Anatomy
 
 1. Feed: You can follow two kinds of entities via RSS feeds: publications, and readers (who choose to broadcast their archives). The items in the feed are ordered according to the score computed by your local recommendation system.
 
