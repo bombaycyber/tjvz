@@ -12,7 +12,7 @@ Open-source recommendation systems for focused reading.
 
 1. Feed: You can follow two kinds of entities via RSS feeds: publications, and readers (who choose to broadcast their archives). The items in the feed are ordered according to the score computed by your local recommendation system.
 
-2. Stack: You can promote items from the feed to the stack i.e. your reading list. 
+2. Stack: You can promote items from the feed to the stack i.e. your reading list. Once you mark them as read, they leave the stack.
 
 3. Archive: A private list of things you have already read. Helps tjvz learn about your tastes and interests. You can optionally broadcast your reading archive via an RSS feed to share your reading with your friends.
 
