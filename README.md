@@ -1,6 +1,6 @@
 # tjvz (pronounced taj-veez)
 
-Local, open-source, interpretable recommendation systems for focused reading.
+Open-source recommendation systems for focused reading.
 
 Principles:
 
