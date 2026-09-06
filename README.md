@@ -2,7 +2,7 @@
 
 Open-source recommendation systems for focused reading.
 
-Principles:
+### Principles:
 
 1. Privacy: All data is user-owned and doesn't leave your device unless you want it to.
 2. Control: You can decide how your algorithm scores an item and learns from your feedback. You can also manually set features like author reputation, publication reputation instead of having those learned from your feedback.
