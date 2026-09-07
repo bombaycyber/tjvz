@@ -437,6 +437,34 @@ def cmd_stack(args) -> dict:
                       for it in items]}
 
 
+def cmd_archive(args) -> dict:
+    from tjvz import store
+
+    p = args.profile_obj
+    items = list(store.iter_records(p.archive_dir, kind="item"))
+    items.sort(key=lambda it: it.get("read") or "", reverse=True)
+    if args.limit:
+        items = items[: args.limit]
+
+    def _row(i, it):
+        stars = "★" * (it.get("rating") or 0)
+        return (f"  {i:>3}  {(it.get('read') or '')[:10]:<10}  {stars:<5}  "
+                f"{_clip(it['title'], 46):<46}  {_clip(it['publication'], 16):<16}   {it['id']}")
+
+    lines = [_row(i, it) for i, it in enumerate(items, 1)]
+    return {
+        "_text": "\n".join(lines) or "(the archive is empty — `tjvz read <id>` or `tjvz import-zotero`)",
+        "archive": [
+            {"id": it["id"], "title": it["title"], "authors": it["authors"],
+             "publication": it["publication"], "url": it.get("url"), "format": it["format"],
+             "tags": it["tags"], "read": it.get("read"), "rating": it.get("rating"),
+             "blurb": it.get("blurb"), "source": it.get("source", {}).get("kind")}
+            for it in items
+        ],
+        "total": len(items),
+    }
+
+
 # --- model learn / status · verify · features ---------------------------------
 
 def cmd_model(args) -> dict:
@@ -599,6 +627,10 @@ def build_parser() -> argparse.ArgumentParser:
 
     pst = sub.add_parser("stack", help="list the stack")
     pst.set_defaults(_fn=cmd_stack, _needs_profile=True)
+
+    parc = sub.add_parser("archive", help="list archived (read) items, newest first")
+    parc.add_argument("--limit", type=int, metavar="N", help="show only the N most recent")
+    parc.set_defaults(_fn=cmd_archive, _needs_profile=True)
 
     pbc = sub.add_parser("broadcast", help="write / publish an Atom feed of your archive")
     pbc.add_argument("--out", metavar="PATH", help="output file (default: <profile>/broadcast/atom.xml)")
