@@ -445,6 +445,7 @@ def cmd_archive(args) -> dict:
     p = args.profile_obj
     items = list(store.iter_records(p.archive_dir, kind="item"))
     items.sort(key=lambda it: it.get("read") or "", reverse=True)
+    total = len(items)
     if args.limit:
         items = items[: args.limit]
 
@@ -463,7 +464,7 @@ def cmd_archive(args) -> dict:
              "blurb": it.get("blurb"), "source": it.get("source", {}).get("kind")}
             for it in items
         ],
-        "total": len(items),
+        "total": total,
     }
 
 
