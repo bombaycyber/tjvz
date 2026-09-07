@@ -29,6 +29,7 @@ NS = {
     "atom": "http://www.w3.org/2005/Atom",
     "content": "http://purl.org/rss/1.0/modules/content/",
     "dc": "http://purl.org/dc/elements/1.1/",
+    "tjvz": "https://github.com/bombaycyber/tjvz/ns",
 }
 
 
@@ -58,6 +59,17 @@ def _text(el) -> str:
     if el is None:
         return ""
     return "".join(el.itertext()).strip()  # handles CDATA and Atom xhtml children
+
+
+def _rating(el) -> int | None:
+    """<tjvz:rating> — a broadcaster's own 1-5 rating of the item."""
+    if el is None:
+        return None
+    try:
+        v = int((el.text or "").strip())
+    except (TypeError, ValueError):
+        return None
+    return v if 1 <= v <= 5 else None
 
 
 def _date(rfc822: str | None = None, iso: str | None = None) -> str | None:
@@ -97,6 +109,7 @@ def _parse_rss(root) -> tuple[dict, list[dict]]:
             "published": _date(rfc822=_text(it.find("pubDate")) or None),
             "categories": [_text(c) for c in it.findall("category") if _text(c)],
             "enclosures": [(en.get("url"), en.get("type") or "") for en in it.findall("enclosure")],
+            "rating": _rating(it.find("tjvz:rating", NS)),
         })
     return channel, entries
 
@@ -129,6 +142,7 @@ def _parse_atom(root) -> tuple[dict, list[dict]]:
             "categories": [c.get("term") for c in en.findall("atom:category", NS) if c.get("term")],
             "enclosures": [(lk.get("href"), lk.get("type") or "")
                            for lk in en.findall("atom:link", NS) if lk.get("rel") == "enclosure"],
+            "rating": _rating(en.find("tjvz:rating", NS)),
         })
     return channel, entries
 
@@ -180,7 +194,11 @@ class RssSource:
         if cover:
             partial["ext"] = {"cover_image": cover}
         if sub["kind"] == "reader":
-            partial["readers"] = [{"source": sub["id"], "rating": None, "blurb": entry.get("summary") or None}]
+            partial["readers"] = [{
+                "source": sub["id"],
+                "rating": entry.get("rating"),          # <tjvz:rating>, if the feed carries one
+                "blurb": entry.get("summary") or None,
+            }]
         return partial
 
     def fetch(self, sub: dict, cache_path: Path, *, force: bool = False) -> dict:

@@ -155,6 +155,8 @@ class Profile:
     def inbox(self) -> Path: return self.root / "inbox"
     @property
     def inbox_done(self) -> Path: return self.inbox / "done"
+    @property
+    def broadcast_dir(self) -> Path: return self.root / "broadcast"
 
     # cache — `rm -rf` here loses nothing but time
     @property

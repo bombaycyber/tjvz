@@ -57,7 +57,7 @@ feeds: []
 
 # subcommands that exist but aren't wired yet
 _PLANNED = {
-    "explain": "M4", "dedup": "later", "migrate": "later", "broadcast": "later",
+    "explain": "M4", "dedup": "later", "migrate": "later",
 }
 
 
@@ -391,7 +391,7 @@ def cmd_judge(args) -> dict:
 
     p = args.profile_obj
     r = rank.judge(p, config.load(p), args.ref, args._decision,
-                   rating=getattr(args, "rating", None))
+                   rating=getattr(args, "rating", None), blurb=getattr(args, "blurb", None))
     verb = {"promote": "promoted", "dismiss": "dismissed", "read": "read"}[args._decision]
     where = f" from {r['from']}" if r["from"] and r["from"] != "feed" else ""
     seat = f" (was rank {r['rank']}, score {r['score']:+.2f})" if r["rank"] else ""
@@ -407,6 +407,22 @@ def cmd_rate(args) -> dict:
     r = rank.rate(p, args.ref, args.rating)
     r["_text"] = f"rated {r['rating']}/5: {r['title']}"
     return r
+
+
+def cmd_blurb(args) -> dict:
+    from tjvz import rank
+
+    r = rank.set_blurb(args.profile_obj, args.ref, args.text)
+    r["_text"] = f"blurb set — {r['title']}"
+    return r
+
+
+def cmd_broadcast(args) -> dict:
+    from tjvz import broadcast, config
+
+    p = args.profile_obj
+    return broadcast.run(p, config.load(p), out=args.out,
+                         publish=args.publish, dry_run=args.dry_run)
 
 
 def cmd_stack(args) -> dict:
@@ -568,6 +584,7 @@ def build_parser() -> argparse.ArgumentParser:
         pj.add_argument("ref", help="item id, id prefix, or url")
         if name == "read":
             pj.add_argument("--rating", type=int, choices=range(1, 6), help="1–5, optional")
+            pj.add_argument("--blurb", metavar="TEXT", help="your one-line take (for the broadcast feed)")
         pj.set_defaults(_fn=cmd_judge, _needs_profile=True, _decision=dec)
 
     prt = sub.add_parser("rate", help="set your 1–5 rating on an archived item")
@@ -575,8 +592,19 @@ def build_parser() -> argparse.ArgumentParser:
     prt.add_argument("rating", type=int, choices=range(1, 6))
     prt.set_defaults(_fn=cmd_rate, _needs_profile=True)
 
+    pbl = sub.add_parser("blurb", help="set your take on an archived item (for broadcast)")
+    pbl.add_argument("ref", help="item id, id prefix, or url")
+    pbl.add_argument("text")
+    pbl.set_defaults(_fn=cmd_blurb, _needs_profile=True)
+
     pst = sub.add_parser("stack", help="list the stack")
     pst.set_defaults(_fn=cmd_stack, _needs_profile=True)
+
+    pbc = sub.add_parser("broadcast", help="write / publish an Atom feed of your archive")
+    pbc.add_argument("--out", metavar="PATH", help="output file (default: <profile>/broadcast/atom.xml)")
+    pbc.add_argument("--publish", action="store_true", help="run broadcast.publish_cmd after writing")
+    pbc.add_argument("--dry-run", action="store_true", help="report what would be included, write nothing")
+    pbc.set_defaults(_fn=cmd_broadcast, _needs_profile=True)
 
     pm = sub.add_parser("model", help="learn / inspect the ranking model")
     pm.add_argument("action", choices=["learn", "status"])

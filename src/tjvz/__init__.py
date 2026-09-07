@@ -18,6 +18,7 @@ Layout:
   model        the one LinearModel: score / explain / learn
   learn        replay the event log (LOO + as-of), fit, gate, write model.json
   verify       golden checks + profile sanity  (`tjvz verify`)
+  broadcast    privacy-filtered Atom feed of the archive; --publish runs a cmd
   sources/     one adapter per ingestion stream
   features/    f(item, ctx, params) -> real ; each ships a MANIFEST + checks
 

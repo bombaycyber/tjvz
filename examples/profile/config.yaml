@@ -34,7 +34,8 @@ model:
     adopt: { min_pos: 20, min_neg: 20, cv_folds: 5, metric: log_loss }
 
 feed:
-  limit: 10        # how many items `tjvz feed` prints by default
+  limit: 10          # how many items `tjvz feed` prints by default
+  # min_score: null   # global floor; items below are hidden unless `tjvz feed --all`
 
 # --- sources -------------------------------------------------------------------
 
@@ -43,12 +44,31 @@ zotero:
   collections_as_tags: true  # fold Zotero collection names into item tags
 
 # --- broadcast ---------------------------------------------------------------
-# Metadata for the RSS feed of your archive (`tjvz broadcast`) — "what I read",
-# subscribable by a friend also running tjvz. Nothing is broadcast until you
-# fill this in.
+# `tjvz broadcast` writes <profile>/broadcast/atom.xml — an Atom feed of your
+# archive ("what I read"), subscribable by a friend also running tjvz
+# (`tjvz sub add <url> --kind reader --id <handle>`). It is deliberately lossy:
+#   * <link> is emitted only for public http(s) URLs — file://, localhost,
+#     LAN-IP and *.local links are dropped, the item stays linkless
+#   * dates are coarsened to the 1st of the month (no activity-timing signal)
+#   * your <tjvz:rating> flows into the subscriber's reader_recs
 
 broadcast:
-  title: ""
-  description: ""
-  link: ""
-  share_bodies: false   # include stored article text in the broadcast feed
+  title: ""                 # feed <title>  (falls back to "tjvz reading")
+  description: ""            # feed <subtitle>
+  link: ""                  # your homepage → <link rel=alternate>
+  feed_url: ""              # where atom.xml will be hosted → feed <id> + <link rel=self>
+  author_name: ""           # <author><name>
+  author_email: ""          # <author><email> — opt-in; it is public, so scrape-prone
+  language: en
+
+  include: all              # all | rated | blurbed
+  min_rating: 4             # used only when include: rated
+  limit: 100                # newest-N by read date; null / 0 = whole archive
+  share_tags: all           # all | none | no-collections | [an, explicit, allowlist]
+  coarsen_dates: true       # dates → 1st of the month
+
+  out_dir: ""               # default: <profile>/broadcast/
+  publish_cmd: ""           # run by `tjvz broadcast --publish`; {dir} and {file} substituted
+  #                           e.g. Cloudflare Pages (needs `wrangler` + CLOUDFLARE_API_TOKEN):
+  #   publish_cmd: "wrangler pages deploy {dir} --project-name tjvz"
+  share_bodies: false       # reserved — bodies aren't stored before TF-IDF lands

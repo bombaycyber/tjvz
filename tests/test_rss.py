@@ -11,7 +11,7 @@ for pth in (str(_SRC), str(Path(__file__).parent)):
     if pth not in sys.path:
         sys.path.insert(0, pth)
 
-from tjvz import paths, store  # noqa: E402
+from tjvz import paths  # noqa: E402
 from tjvz.canon import canonicalise  # noqa: E402
 from tjvz.cli import main  # noqa: E402
 from tjvz.schema import validate  # noqa: E402

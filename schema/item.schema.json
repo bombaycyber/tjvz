@@ -210,6 +210,11 @@
           "type": "array",
           "items": { "type": "string" }
         },
+        "collection_tags": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "The normalised subset of `tags` that came from Zotero collection names (present only when zotero.collections_as_tags is on). broadcast.share_tags: no-collections drops exactly these from the emitted <category> list."
+        },
         "reading_status": { "type": "string" }
       }
     }

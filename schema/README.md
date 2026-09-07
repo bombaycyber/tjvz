@@ -377,22 +377,28 @@ feature-set state; a mismatch with the live registry means re-learn.
 
 ---
 
-# Archive records as a broadcast RSS feed
+# Archive records as a broadcast Atom feed
 
-A later command emits an RSS feed of your archive so a friend running tjvz
-can subscribe to what you read (the basis of `reader_avg_rating`). Every
-archive record already carries what that needs:
+`tjvz broadcast` writes `<profile>/broadcast/atom.xml` — an Atom feed of
+your archive, so a friend running tjvz can subscribe to what you read (the
+basis of `reader_recs`). `--publish` then runs `config` `broadcast.publish_cmd`
+(e.g. `wrangler pages deploy {dir} …`).
 
-| RSS element | from | notes |
+| Atom element | from | notes |
 |---|---|---|
-| `<item><title>` | `title` | |
-| `<link>` | `url` | `url: null` records are omitted |
-| `<guid isPermaLink="false">` | `id` | stable across subscribers — same URL → same id |
-| `<pubDate>` | `read` | RFC 822; a partial date → 1st of month, 00:00 UTC |
-| `<dc:creator>` | `authors[].name` joined | |
-| `<description>` | `blurb` else `summary` | your take leads |
-| `<category>` | `tags[]` | |
-| rating element | `rating` | your 1–5 rating, verbatim |
-| `<content:encoded>` | body at `.tjvz/text/<text_ref>` | only if bodies are stored **and** `config` `broadcast.share_bodies` |
+| `<entry><title>` | `title` | |
+| `<id>` | `urn:tjvz:<item id>` | |
+| `<link rel="alternate">` | `canonical_url` | **omitted** when the URL is not a public http(s) host — `file://`, `localhost`, a bare IP, `*.local`/`*.internal`/… The entry is still emitted, just linkless. A subscriber recomputes the same item id from this link (or from title+author when absent). |
+| `<updated>` / `<published>` | `read` | coarsened to `YYYY-MM-01T00:00:00Z` when `broadcast.coarsen_dates` (default) — no activity-timing signal |
+| `<author><name>` | `authors[].name` | one per author |
+| `<category term>` | `tags[]` | gated by `broadcast.share_tags`: `all` (default) · `none` · `no-collections` (drops the `ext.collection_tags` subset — private Zotero collection names) · an explicit allowlist |
+| `<summary type="text">` | `blurb`, else `summary`, else `title` | a subscriber reads this into `readers[].blurb` |
+| `<content type="html">` | `summary` | only when a `blurb` is also present (so `<summary>` carries your take and `<content>` the source's) |
+| `<tjvz:rating>` | `rating` | your 1–5, verbatim; omitted when unrated. `xmlns:tjvz="https://github.com/bombaycyber/tjvz/ns"`. A `kind: reader` subscription folds this into `readers[].rating` → `reader_recs`. |
 
-Channel metadata comes from `config.yaml` `broadcast:`, not from records.
+Which items are included: `broadcast.include` (`all` · `rated` + `min_rating` · `blurbed`), newest `broadcast.limit` by read date (default 100).
+
+Channel metadata (`<title>`, `<subtitle>`, `<link>`, `<id>`/`feed_url`,
+`<author>` name + opt-in email) comes from `config.yaml` `broadcast:`, not
+from records. Bodies (`<content:encoded>`) are reserved for after TF-IDF —
+`broadcast.share_bodies` exists but there is nothing to share yet.

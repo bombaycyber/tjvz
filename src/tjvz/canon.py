@@ -34,12 +34,17 @@ def _authors(raw) -> list:
     return out
 
 
+def norm_tag(t) -> str:
+    """The canonical stored form of a tag: whitespace-collapsed, lowercased."""
+    return " ".join(str(t).split()).lower()
+
+
 def _tags(*lists) -> list:
     seen: set[str] = set()
     out: list[str] = []
     for lst in lists:
         for t in lst or []:
-            t = " ".join(str(t).split()).lower()
+            t = norm_tag(t)
             if t and t not in seen:
                 seen.add(t)
                 out.append(t)

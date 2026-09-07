@@ -37,7 +37,23 @@ DEFAULTS: dict[str, Any] = {
     },
     "feed": {"limit": 10, "min_score": None},
     "zotero": {"collections_as_tags": True},
-    "broadcast": {"title": "", "description": "", "link": "", "share_bodies": False},
+    "broadcast": {
+        "title": "",              # feed <title>; falls back to "tjvz reading"
+        "description": "",         # feed <subtitle>
+        "link": "",               # your homepage → feed <link rel=alternate>
+        "feed_url": "",           # where atom.xml will be hosted → feed <id> + <link rel=self>
+        "author_name": "",        # feed <author><name>
+        "author_email": "",       # feed <author><email> — opt-in; public, so scrape-prone
+        "language": "en",
+        "include": "all",         # all | rated | blurbed
+        "min_rating": 4,          # when include == rated
+        "limit": 100,             # newest-N by read date; null/0 = whole archive
+        "share_tags": "all",      # all | none | no-collections | [allowlist]
+        "coarsen_dates": True,    # dates → 1st of the month (kills timing signal)
+        "out_dir": "",            # default: <profile>/broadcast/
+        "publish_cmd": "",        # run by `tjvz broadcast --publish`; {dir} / {file} substituted
+        "share_bodies": False,    # reserved (bodies aren't stored pre-TF-IDF)
+    },
 }
 
 

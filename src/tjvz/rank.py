@@ -194,7 +194,8 @@ def _clean(item: dict, **set_keys) -> dict:
     return out
 
 
-def judge(profile, cfg: dict, ref: str, decision: str, *, rating: int | None = None) -> dict:
+def judge(profile, cfg: dict, ref: str, decision: str, *,
+          rating: int | None = None, blurb: str | None = None) -> dict:
     item, where = _resolve(profile, ref)
     if item is None:
         raise ValueError(f"no item matching {ref!r} in the feed, stack, archive, or trash")
@@ -216,6 +217,8 @@ def judge(profile, cfg: dict, ref: str, decision: str, *, rating: int | None = N
         rec = _clean(item, read=at)
         if rating is not None:
             rec["rating"] = rating
+        if blurb:
+            rec["blurb"] = blurb
         store.write_record(profile.shard("archive", store.ym_of(at)), rec, "archive")
     else:  # pragma: no cover
         raise ValueError(f"unknown decision {decision!r}")
@@ -232,13 +235,24 @@ def judge(profile, cfg: dict, ref: str, decision: str, *, rating: int | None = N
 
 
 def rate(profile, ref: str, rating: int) -> dict:
+    item = _archive_only(profile, ref)
+    store.update_record(profile.archive_dir, item["id"], {"rating": rating})
+    return {"id": item["id"], "title": item["title"], "rating": rating}
+
+
+def set_blurb(profile, ref: str, text: str) -> dict:
+    item = _archive_only(profile, ref)
+    store.update_record(profile.archive_dir, item["id"], {"blurb": text})
+    return {"id": item["id"], "title": item["title"], "blurb": text}
+
+
+def _archive_only(profile, ref: str) -> dict:
     item, where = _resolve(profile, ref)
     if item is None:
         raise ValueError(f"no item matching {ref!r}")
     if where != "archive":
         raise ValueError(f"{item['title']!r} is in the {where}, not the archive — `tjvz read` it first")
-    store.update_record(profile.archive_dir, item["id"], {"rating": rating})
-    return {"id": item["id"], "title": item["title"], "rating": rating}
+    return item
 
 
 def _drop_from_manifest(profile, iid: str) -> None:

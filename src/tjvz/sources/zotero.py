@@ -18,6 +18,7 @@ import sqlite3
 import tempfile
 from pathlib import Path
 
+from tjvz.canon import norm_tag
 from tjvz.sources import register
 
 FLOW_PREFIX = "ReadingFlow: "
@@ -117,9 +118,12 @@ class ZoteroSource:
         f = raw["fields"]
         pub = next((f[k] for k in _PUB_FIELDS if f.get(k)), "")
         tags = list(raw["tags"])
-        if self.collections_as_tags:
-            tags += raw["collections"]
         ext = {"zotero_collections": raw["collections"]}
+        if self.collections_as_tags and raw["collections"]:
+            tags += raw["collections"]
+            # the normalised subset of tags that is really a private collection
+            # name — broadcast.share_tags: no-collections drops exactly these
+            ext["collection_tags"] = [norm_tag(c) for c in raw["collections"]]
         for zk, ek in (("DOI", "doi"), ("ISSN", "issn"), ("ISBN", "isbn"),
                        ("volume", "volume"), ("issue", "issue"), ("pages", "pages"),
                        ("language", "language")):
