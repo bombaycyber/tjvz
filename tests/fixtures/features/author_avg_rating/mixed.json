@@ -1,0 +1,64 @@
+{
+  "item": {
+    "authors": [
+      {
+        "name": "Loved One",
+        "role": "author"
+      },
+      {
+        "name": "Dropped One",
+        "role": "author"
+      }
+    ]
+  },
+  "ctx": {
+    "archive": [
+      {
+        "authors": [
+          {
+            "name": "Loved One",
+            "role": "author"
+          }
+        ],
+        "rating": 5
+      },
+      {
+        "authors": [
+          {
+            "name": "Loved One",
+            "role": "author"
+          }
+        ],
+        "rating": 5
+      },
+      {
+        "authors": [
+          {
+            "name": "Loved One",
+            "role": "author"
+          }
+        ],
+        "rating": 5
+      }
+    ],
+    "stack": [],
+    "trash": [
+      {
+        "authors": [
+          {
+            "name": "Dropped One",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "authors": [
+          {
+            "name": "Dropped One",
+            "role": "author"
+          }
+        ]
+      }
+    ]
+  }
+}

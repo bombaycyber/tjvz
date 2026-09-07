@@ -1,0 +1,11 @@
+{
+  "item": {
+    "readers": [
+      {
+        "source": "hn",
+        "rating": null
+      }
+    ]
+  },
+  "ctx": {}
+}

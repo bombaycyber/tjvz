@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+
+# macOS
+.DS_Store
+
+# tjvz — cache directory of any profile (rm -rf .tjvz/ must lose nothing but time)
+.tjvz/
+
+# local dev/test profiles kept inside the checkout
+/scratch-profile/
+/*.profile/
+
+# tooling
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/

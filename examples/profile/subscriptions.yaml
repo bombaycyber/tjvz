@@ -1,0 +1,52 @@
+# RSS / Atom feeds tjvz fetches. `tjvz sub add <url>` fetches the feed once,
+# shows you what it is, then asks for `kind` and `persist` — both are required
+# on every entry, there is no default. Hand-editing is fine; a missing `kind`
+# or `persist` is a load error, not a guess.
+#
+#   kind:        how to read the feed — cannot be inferred from its content
+#     publication   a venue; publication <- channel <title>, authors <- dc:creator
+#     author        one person across venues; publication <- per-item link host
+#     reader        a person/crowd whose surfacing you follow (another tjvz
+#                   broadcast, a curator, HN, a subreddit) — every item also
+#                   becomes a readers[] signal
+#     topic         a filter-defined stream (arXiv cs.CL, a subreddit, a section,
+#                   a saved search); requires apply_tags; the venue is incidental
+#
+#   persist:     how long an unjudged item stays in the feed
+#     forever       until you judge it (promote / dismiss / read)
+#     <N>           N days from first_seen, then dropped silently
+#                   (not a dismissal — no training signal)
+#     0             never queued; ranked live from cache each run, gone next
+#                   fetch — for high-volume feeds
+#
+#   apply_tags:  stamp these tags onto every item from this feed (required for
+#                kind: topic)
+#   paused: true      keep the entry, skip it on fetch
+#   fetch_page: true  fetch the full article page instead of the feed's own text
+#
+# A kind:reader feed's trust weight is NOT set here — the learned value lives
+# in model.json, an optional hand-set prior/pin in config.yaml
+# (model.scoring.features.reader_recs.readers.<id>), and `tjvz sub list` shows
+# the effective number.
+
+feeds:
+  - id: kasurian
+    url: https://kasurian.com/rss
+    kind: publication
+    persist: forever
+
+  - id: asimov-press
+    url: https://www.asimov.press/feed
+    kind: publication
+    persist: forever
+
+  # - id: hn
+  #   url: https://hnrss.org/frontpage
+  #   kind: reader
+  #   persist: 0
+
+  # - id: arxiv-cl
+  #   url: http://export.arxiv.org/rss/cs.CL
+  #   kind: topic
+  #   apply_tags: [cs.CL]
+  #   persist: 14

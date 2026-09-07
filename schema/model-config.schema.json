@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/bombaycyber/tjvz/main/schema/model-config.schema.json",
+  "title": "tjvz model config (the `model:` block of config.yaml)",
+  "description": "There is ONE model: score = bias + sum(weight_i * feature_i(item)). No plugin registry - the variation that matters is all here. `scoring` is the forward model (features, weights, bias); `learning` (optional - omit to never run a learn) is how weights are learned from the event log. There is no normalisation layer, so a weight accounts for its feature's natural scale.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["scoring"],
+  "properties": {
+    "scoring": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["features"],
+      "properties": {
+        "features": {
+          "type": "object",
+          "description": "Active features. A registered feature omitted here is left out of the model entirely (still computed and cached for future models). Key = feature id.",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "weight": { "type": "number", "description": "prior coefficient in the linear combine. Required for a scalar feature; omitted for a column-group feature (manifest expands:true), whose per-column weights are learned with prior 0 and outer weight fixed at 1." },
+              "params": { "type": "object", "description": "override the feature manifest's default structural knobs" },
+              "pinned": { "type": "boolean", "description": "true -> never learned away from this weight (lambda -> inf on the coordinate). Default false." },
+              "readers": {
+                "type": "object",
+                "description": "column-group feature only (reader_recs): hand-set prior weight / pin per reader source. Learned per-reader weights live in model.json; these are the priors a learn run shrinks toward (default 0, unpinned). Readers with no entry here (incl. AI sources) still get a learned weight with prior 0.",
+                "additionalProperties": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "weight": { "type": "number" },
+                    "pinned": { "type": "boolean" }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "bias": { "type": "number", "description": "additive constant. Does not affect ranking order; matters only when the score is read as a probability." },
+        "stochastic": {
+          "type": "boolean",
+          "description": "true -> score() may return a per-pass sample (a future Thompson-style variant that keeps a weight posterior). Default false."
+        }
+      }
+    },
+    "learning": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Omit the whole block to never run a learn; the scoring weights are used as given.",
+      "properties": {
+        "utility": {
+          "type": "string",
+          "enum": ["log_odds", "ev"],
+          "description": "log_odds: learn predicts read; score is a log-odds. ev: learn predicts the rating; score is an expected rating."
+        },
+        "label": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "positive": {
+              "type": "array",
+              "items": { "type": "string", "enum": ["read", "stack", "promote"] },
+              "description": "which decisions count as a positive label. Untouched items are unlabeled and excluded."
+            }
+          }
+        },
+        "trainable": {
+          "type": "string",
+          "enum": ["weights", "feature_params"],
+          "description": "exactly one per learn run (identifiability). weights: all non-pinned weights. feature_params: all params a manifest marks tunable."
+        },
+        "regularization": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "lambda0": { "type": "number", "description": "base shrinkage strength toward the scoring weights (not toward 0)" },
+            "anneal_n0": { "type": "number", "description": "lambda = lambda0 * n0 / (n0 + n_events); removes the cold-start cliff" }
+          }
+        },
+        "adopt": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Gates a learned fit must clear before `tjvz model learn --adopt` replaces the scoring weights.",
+          "properties": {
+            "min_pos": { "type": "integer" },
+            "min_neg": { "type": "integer" },
+            "min_varying_features": { "type": "integer" },
+            "cv_folds": { "type": "integer" },
+            "metric": { "type": "string", "enum": ["log_loss", "auc", "mae", "rmse"] }
+          }
+        }
+      }
+    }
+  }
+}

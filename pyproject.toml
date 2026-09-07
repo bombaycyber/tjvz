@@ -1,0 +1,43 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "tjvz"
+version = "0.1.0.dev0"
+description = "Private algorithms for personalised reading recommendations"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE"]
+authors = [{ name = "Bombay Cybernetics Laboratory" }]
+
+# The single runtime dependency. Used only for the hand-edited YAML config
+# files; every record store is stdlib json.
+dependencies = ["PyYAML>=6.0"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "ruff>=0.6"]
+
+[project.urls]
+Repository = "https://github.com/bombaycyber/tjvz"
+Issues = "https://github.com/bombaycyber/tjvz/issues"
+
+[project.scripts]
+tjvz = "tjvz.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/tjvz"]
+
+# Schemas are data the package reads at runtime (the built-in validator loads
+# them); ship them inside the wheel.
+[tool.hatch.build.targets.wheel.force-include]
+"schema" = "tjvz/schema"
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src", "tests"]

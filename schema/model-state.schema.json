@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/bombaycyber/tjvz/main/schema/model-state.schema.json",
+  "title": "tjvz model state (model.json)",
+  "description": "Per-profile STATE (survives rm -rf .tjvz/). The weights the one model currently ranks with and how they were arrived at. Until a learn run is adopted these mirror config.yaml model.scoring; `tjvz model learn --adopt` replaces them if the learning.adopt gates pass. There is no model plugin - see model-config.schema.json.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "source", "weights", "bias", "features_fingerprint"],
+  "properties": {
+    "schema_version": { "type": "integer", "enum": [1] },
+    "source": {
+      "type": "string",
+      "enum": ["prior", "learned"],
+      "description": "prior = hand-set weights copied from config.yaml. learned = adopted from `tjvz model learn --adopt`."
+    },
+    "weights": {
+      "type": "object",
+      "additionalProperties": { "type": "number" },
+      "description": "feature id -> coefficient, for every feature the model uses."
+    },
+    "bias": { "type": "number" },
+    "features_fingerprint": {
+      "type": "string",
+      "description": "sha256[:12] over the sorted (feature id, version, hash) triples of the feature set these weights were derived for. When it differs from the live registry the model is stale — `tjvz model status` flags it, refit clears it."
+    },
+    "learned_at": {
+      "type": ["string", "null"],
+      "description": "ISO-8601 UTC of the adopted learn; null when source = prior."
+    },
+    "learned": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "description": "Diagnostics from the adopted learn run; null when source = prior.",
+      "properties": {
+        "n_pos": { "type": "integer" },
+        "n_neg": { "type": "integer" },
+        "cv_metric": { "type": "string" },
+        "cv_score": { "type": "number" },
+        "cv_score_prior": {
+          "type": "number",
+          "description": "The same metric for the prior weights on the same CV folds. The learn run must beat this to be adopted."
+        },
+        "events_through": {
+          "type": "string",
+          "description": "Timestamp of the last event included in the learn run."
+        }
+      }
+    }
+  }
+}

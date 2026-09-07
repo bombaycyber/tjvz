@@ -1,0 +1,217 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/bombaycyber/tjvz/main/schema/item.schema.json",
+  "title": "tjvz item",
+  "description": "A reading item: one record in the feed cache, the stack, an archive month-shard, or a trash month-shard. Every source adapter produces this shape via canonicalise(). Archive records are self-sufficient for re-broadcast as a reader RSS feed (see schema/README.md 'Archive records as a broadcast RSS feed'). See README.md for field prose, the format vocabulary, and the inbox drop format. tjvz's built-in validator enforces the subset {type, required, enum, properties, items, oneOf, additionalProperties}; the rest (pattern, format, const, minItems, ...) is for external JSON Schema tooling.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "id",
+    "title",
+    "authors",
+    "publication",
+    "format",
+    "tags",
+    "source",
+    "aliases",
+    "readers",
+    "first_seen",
+    "ext"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "enum": [1],
+      "description": "Record schema version. Always 1 today. store.py applies MIGRATIONS on read when this lags the current version."
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[ut]:[0-9a-f]{16}$",
+      "description": "tjvz-assigned, never taken from the source. 'u:' + sha256(canonical_url)[:16] when a URL exists, else 't:' + sha256(normalised title + first author)[:16]. id_scheme is a frozen constant (1); a bump invalidates cross-user id joins loudly."
+    },
+    "url": {
+      "type": ["string", "null"],
+      "format": "uri",
+      "description": "The item URL exactly as the source gave it. null only for URL-less items (some AI-authored inbox records)."
+    },
+    "canonical_url": {
+      "type": ["string", "null"],
+      "format": "uri",
+      "description": "url after tracking-param stripping and host rewriting. The dedup key and the basis of a 'u:' id. null iff url is null."
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "authors": {
+      "type": "array",
+      "description": "Every creator, in source order. A bare string is accepted on input and normalised to {name, role: 'author'}. role defaults to 'author'; Zotero contributes 'editor'/'translator'/'contributor'/'commenter'/... Features that care filter to role == 'author' themselves.",
+      "items": {
+        "oneOf": [
+          {
+            "type": "string",
+            "minLength": 1
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["name"],
+            "properties": {
+              "name": { "type": "string", "minLength": 1 },
+              "role": { "type": "string" }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["family"],
+            "properties": {
+              "given": { "type": "string" },
+              "family": { "type": "string", "minLength": 1 },
+              "role": { "type": "string" }
+            }
+          }
+        ]
+      }
+    },
+    "publication": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Where it was published. RSS: channel <title>. Zotero: the publicationTitle base field (blogTitle / websiteTitle / bookTitle all map to it). Falls back to the canonical host, then the literal string 'unknown'. A model input, so it must always resolve to something."
+    },
+    "format": {
+      "type": "string",
+      "enum": [
+        "essay",
+        "article",
+        "paper",
+        "book",
+        "chapter",
+        "thread",
+        "transcript",
+        "document",
+        "podcast",
+        "video",
+        "artwork",
+        "dataset",
+        "other"
+      ],
+      "description": "tjvz's own vocabulary. RSS items default to 'essay' ('podcast'/'video' if an audio/video enclosure is present). Zotero itemTypes map per the table in README.md. 'other' is the last resort. The first eight are 'scorable' (they enter the TF-IDF / relevance corpus); the rest are not."
+    },
+    "tags": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Lowercased at storage. RSS <category> elements + Zotero tags; Zotero collection names are merged in too unless config zotero.collections_as_tags is false. Hyphen expansion (urdu-hindi -> urdu, hindi) happens at feature-computation time, not here."
+    },
+    "summary": {
+      "type": ["string", "null"],
+      "description": "Short blurb. RSS <description> (the deck/subtitle only) or Zotero abstractNote. Not the body."
+    },
+    "published": {
+      "type": ["string", "null"],
+      "description": "When the world got it. ISO-8601 preferred; partial values tolerated ('2024', '2024-08'). RSS <pubDate> (RFC 822, converted). Zotero 'date' is free text and is best-effort parsed. Never backfilled."
+    },
+    "text_ref": {
+      "type": ["string", "null"],
+      "pattern": "^[0-9a-f]{64}$",
+      "description": "sha256 (hex) of the extracted plain-text body. The bytes live at .tjvz/text/<first two hex chars>/<hash>.txt, which is a per-profile cache (safe to lose). Body text is never stored inline in the record."
+    },
+    "text_source": {
+      "type": ["string", "null"],
+      "enum": ["content_encoded", "description", "title", "abstract", "page", null],
+      "description": "Which text tier is available for this item, best to worst. Recorded from v0 on (even though v0 relevance is tags-only) so it is present when TF-IDF arrives."
+    },
+    "source": {
+      "type": "object",
+      "description": "Provenance. 'kind' is always present. kind=rss adds feed_id, feed_url, guid. kind=zotero adds library, key, version. kind=jsonfile adds path. kind=csv adds path (and optionally row). kind=manual needs only kind. Extra provenance keys are allowed.",
+      "required": ["kind"],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": ["rss", "zotero", "jsonfile", "csv", "manual"]
+        },
+        "feed_id": { "type": "string" },
+        "feed_url": { "type": "string" },
+        "guid": { "type": "string" },
+        "library": { "type": "string" },
+        "key": { "type": "string" },
+        "version": { "type": "integer" },
+        "path": { "type": "string" },
+        "row": { "type": "integer" },
+        "imported_at": { "type": "string" }
+      }
+    },
+    "aliases": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Other canonical_urls known to be the same item (m./AMP/custom-domain variants). Filled by `tjvz dedup`, not by adapters."
+    },
+    "first_seen": {
+      "type": "string",
+      "description": "ISO-8601 UTC timestamp of the first time tjvz ingested this item, in this profile."
+    },
+    "read": {
+      "type": ["string", "null"],
+      "description": "When you read it. Set only on archive records; null everywhere else. ISO-8601, partial tolerated ('2026-05'). Set by `tjvz read` (a full UTC timestamp) or an importer (Zotero dateAdded / Reading-Flow date, a CSV's date column). Mutually exclusive with `dismissed`. Becomes the broadcast feed's <pubDate>."
+    },
+    "dismissed": {
+      "type": ["string", "null"],
+      "description": "When you dismissed it. Set only on trash records; null everywhere else. ISO-8601 UTC timestamp. Mutually exclusive with `read`. Kept so a dismissal can be reviewed or undone without the record living in the archive."
+    },
+    "blurb": {
+      "type": ["string", "null"],
+      "description": "Your own one-line take on the item, written for the broadcast RSS feed (becomes/leads the <description>). Distinct from `summary`, which is the source's own blurb. Optional; null unless you wrote one."
+    },
+    "rating": {
+      "type": ["integer", "null"],
+      "enum": [1, 2, 3, 4, 5, null],
+      "description": "YOUR rating, an integer 1-5. Set by `tjvz rate <id> <1-5>`. null / absent = unrated. Never backfilled. Feeds the avg_rating features (an unrated read is imputed as 3); broadcast verbatim."
+    },
+    "readers": {
+      "type": "array",
+      "description": "OTHER people's signals about this item - from a friend's broadcast feed, or an AI drop in inbox/. Keyed by `source`; re-ingesting the same source updates its entry. The substrate for the reader_avg_rating feature (feature 4). Kept strictly separate from your own `rating`. Empty on most records.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["source"],
+        "properties": {
+          "source": {
+            "type": "string",
+            "description": "Whose signal this is: a broadcast feed id, a person's handle, 'ai:<name>', ..."
+          },
+          "rating": {
+            "type": ["number", "null"],
+            "description": "Their rating, 1-5 (an adapter converts other scales at ingest). null = they surfaced it without rating (a curator)."
+          },
+          "blurb": { "type": ["string", "null"] },
+          "at": {
+            "type": ["string", "null"],
+            "description": "When they recorded it (ISO-8601)."
+          }
+        }
+      }
+    },
+    "ext": {
+      "type": "object",
+      "description": "Open extension bag. New sources and future features add keys here without a schema migration. Common keys are typed below; anything else is allowed.",
+      "additionalProperties": true,
+      "properties": {
+        "doi": { "type": "string" },
+        "issn": { "type": "string" },
+        "isbn": { "type": "string" },
+        "volume": { "type": "string" },
+        "issue": { "type": "string" },
+        "pages": { "type": "string" },
+        "language": { "type": "string" },
+        "word_count": { "type": "integer" },
+        "cover_image": { "type": "string" },
+        "zotero_collections": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "reading_status": { "type": "string" }
+      }
+    }
+  }
+}

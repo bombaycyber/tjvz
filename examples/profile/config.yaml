@@ -1,0 +1,54 @@
+# tjvz profile config — a sample.
+#
+# `tjvz init <dir>` writes a commented stub like this into a new profile
+# directory. The checkout you cloned is code only; your data lives in the
+# profile directory you init. Every value below has a default — uncomment
+# only what you want to change.
+
+schema: 1          # record schema version (frozen; migrations bump it)
+id_scheme: 1       # FROZEN — a bump invalidates cross-profile id joins, loudly
+
+# --- ranking -----------------------------------------------------------------
+# There is one model: score = bias + Σ weightᵢ · featureᵢ(item). No
+# normalisation layer, so a weight has to account for its feature's natural
+# scale (avg_rating spans ~6 units, the rest ~1) — the numbers look uneven
+# on purpose. `tjvz explain <id>` shows every term.
+
+model:
+  scoring:
+    features:
+      relevance:          { weight: 3.0, params: { topk: 3 } }   # [0,1]
+      author_avg_rating:  { weight: 0.4 }                        # -1..5
+      pub_avg_rating:     { weight: 0.2 }                        # -1..5
+      author_familiarity: { weight: -0.5, pinned: true }         # [0,1) exploration dial
+      pub_familiarity:    { weight: -0.25, pinned: true }        # [0,1) exploration dial
+      reader_recs:        {}                                     # column-group: 0 until reader feeds + a learn run
+    bias: 0.0
+    stochastic: false     # true → score() samples per pass (a future Thompson variant)
+
+  learning:               # omit this whole block to never fit — weights stay as above
+    utility: log_odds     # log_odds (predict read) | ev (predict rating)
+    label: { positive: [read, stack] }
+    trainable: weights    # weights | feature_params  (never both — identifiability)
+    regularization: { lambda0: 1.0, anneal_n0: 50 }   # shrink toward the weights above, not 0
+    adopt: { min_pos: 20, min_neg: 20, cv_folds: 5, metric: log_loss }
+
+feed:
+  limit: 10        # how many items `tjvz feed` prints by default
+
+# --- sources -------------------------------------------------------------------
+
+zotero:
+  # library: ~/Zotero        # path to the Zotero profile dir (auto-detected if unset)
+  collections_as_tags: true  # fold Zotero collection names into item tags
+
+# --- broadcast ---------------------------------------------------------------
+# Metadata for the RSS feed of your archive (`tjvz broadcast`) — "what I read",
+# subscribable by a friend also running tjvz. Nothing is broadcast until you
+# fill this in.
+
+broadcast:
+  title: ""
+  description: ""
+  link: ""
+  share_bodies: false   # include stored article text in the broadcast feed

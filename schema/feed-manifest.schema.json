@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/bombaycyber/tjvz/main/schema/feed-manifest.schema.json",
+  "title": "tjvz feed manifest entry",
+  "description": "One line of feed/manifest.jsonl. The feed manifest is STATE (it lives outside .tjvz/): it records which items have been surfaced to you and not yet judged, so nothing you were shown is lost when a publisher rotates it out of their RSS feed. An entry is removed once its item is promoted, dismissed, or read. It carries no score or rank: those are recomputed live on every `tjvz feed` from the current model and archive - only membership and first-surfaced time are durable. The item body itself stays in the disposable .tjvz/feeds/ cache.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "first_seen"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[ut]:[0-9a-f]{16}$",
+      "description": "The item id. The full record is in the .tjvz/feeds/ cache; look it up there."
+    },
+    "first_seen": {
+      "type": "string",
+      "description": "ISO-8601 UTC timestamp of the first time this item was surfaced in a ranked feed. Used for 'new since last check' and for spotting stale unjudged items."
+    }
+  }
+}

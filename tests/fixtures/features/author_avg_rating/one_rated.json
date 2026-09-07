@@ -1,0 +1,25 @@
+{
+  "item": {
+    "authors": [
+      {
+        "name": "Scott Alexander",
+        "role": "author"
+      }
+    ]
+  },
+  "ctx": {
+    "archive": [
+      {
+        "authors": [
+          {
+            "name": "Scott Alexander",
+            "role": "author"
+          }
+        ],
+        "rating": 5
+      }
+    ],
+    "stack": [],
+    "trash": []
+  }
+}

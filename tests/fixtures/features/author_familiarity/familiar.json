@@ -1,0 +1,66 @@
+{
+  "item": {
+    "authors": [
+      {
+        "name": "Prolific",
+        "role": "author"
+      }
+    ]
+  },
+  "ctx": {
+    "archive": [
+      {
+        "authors": [
+          {
+            "name": "Prolific",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "authors": [
+          {
+            "name": "Prolific",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "authors": [
+          {
+            "name": "Prolific",
+            "role": "author"
+          }
+        ]
+      }
+    ],
+    "stack": [
+      {
+        "authors": [
+          {
+            "name": "Prolific",
+            "role": "author"
+          }
+        ]
+      }
+    ],
+    "trash": [
+      {
+        "authors": [
+          {
+            "name": "Prolific",
+            "role": "author"
+          }
+        ]
+      },
+      {
+        "authors": [
+          {
+            "name": "Prolific",
+            "role": "author"
+          }
+        ]
+      }
+    ]
+  }
+}

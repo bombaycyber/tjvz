@@ -1,0 +1,15 @@
+{
+  "item": {
+    "readers": [
+      {
+        "source": "birkar",
+        "rating": 5
+      },
+      {
+        "source": "Alice",
+        "rating": 2
+      }
+    ]
+  },
+  "ctx": {}
+}

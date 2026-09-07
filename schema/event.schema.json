@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/bombaycyber/tjvz/main/schema/event.schema.json",
+  "title": "tjvz event",
+  "description": "One judgement, appended as a line to events/YYYY-MM.jsonl. Immutable, append-only - this is the decision log. Feature values are NOT stored here: they are recomputed on demand (leave-one-out, against the archive as of `at`) from the archive history, so a feature can be added or changed and the whole training set reflects it without rewriting events. What is frozen here is only what cannot be reconstructed later. Suppression (which items never resurface) is a projection of the current stores - archive union stack union trash - not of this log.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "id", "decision", "at", "model"],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "enum": [1]
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[ut]:[0-9a-f]{16}$",
+      "description": "The item this judgement is about."
+    },
+    "decision": {
+      "type": "string",
+      "enum": ["promote", "dismiss", "read"],
+      "description": "promote = feed -> stack. dismiss = feed -> trash; the model's negative label (record moves to trash/YYYY-MM.jsonl, out of the archive but recoverable). read = -> archive; a positive label, reachable from feed or stack. Rescuing an item from trash into stack/archive also lands here as promote/read - the earlier dismiss row stays."
+    },
+    "at": {
+      "type": "string",
+      "description": "ISO-8601 UTC timestamp of the decision. Also the as-of point for recomputing this row's features."
+    },
+    "model": {
+      "type": "string",
+      "description": "id of the active model when the decision was made."
+    },
+    "rank": {
+      "type": ["integer", "null"],
+      "description": "1-based position of the item in the ranked feed at decision time. Frozen here because feed composition is unrecoverable and rank is position-bias signal. null when the item was judged outside the feed (e.g. `tjvz read <url>` for something never surfaced, or a trash rescue)."
+    },
+    "score": {
+      "type": ["number", "null"],
+      "description": "The score the active model showed for this item at decision time. A fossil - computed with the model and feature definitions of that moment - kept for `tjvz explain --history`, not used for training."
+    }
+  }
+}

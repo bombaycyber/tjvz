@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>Some Lab</title>
+  <subtitle>notes</subtitle>
+  <link rel="self" href="https://lab.example/feed.atom"/>
+  <link rel="alternate" href="https://lab.example/"/>
+  <entry>
+    <title>An Atom Entry</title>
+    <id>tag:lab.example,2026:/notes/1</id>
+    <link rel="alternate" href="https://lab.example/notes/one"/>
+    <link rel="enclosure" type="audio/mpeg" href="https://lab.example/one.mp3"/>
+    <published>2026-04-07T19:30:22Z</published>
+    <author><name>Dana Lee</name></author>
+    <category term="biology"/>
+    <category term="methods"/>
+    <summary>a short summary</summary>
+    <content type="xhtml">
+      <div xmlns="http://www.w3.org/1999/xhtml"><p>Body <em>with</em> markup.</p></div>
+    </content>
+  </entry>
+</feed>

@@ -1,0 +1,23 @@
+{
+  "item": {
+    "publication": "Kasurian"
+  },
+  "ctx": {
+    "archive": [
+      {
+        "publication": "Kasurian",
+        "rating": 5
+      },
+      {
+        "publication": "Kasurian",
+        "rating": 3
+      }
+    ],
+    "stack": [],
+    "trash": [
+      {
+        "publication": "Kasurian"
+      }
+    ]
+  }
+}

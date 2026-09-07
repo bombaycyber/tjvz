@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss xmlns:dc="http://purl.org/dc/elements/1.1/"
+     xmlns:content="http://purl.org/rss/1.0/modules/content/"
+     xmlns:atom="http://www.w3.org/2005/Atom"
+     version="2.0">
+<channel>
+  <title><![CDATA[Kasurian]]></title>
+  <description><![CDATA[essays]]></description>
+  <link>https://www.kasurian.com/</link>
+  <item>
+    <title><![CDATA[The Rise & Fall of New Atheism]]></title>
+    <description><![CDATA[Where did the New Atheists go?]]></description>
+    <link>https://www.kasurian.com/rise-fall-new-atheism/</link>
+    <guid isPermaLink="false">6a5b658274803a00011eaeeb</guid>
+    <category><![CDATA[Culture]]></category>
+    <category><![CDATA[politics]]></category>
+    <dc:creator><![CDATA[Kasurian]]></dc:creator>
+    <pubDate>Sun, 28 Jun 2026 12:00:57 GMT</pubDate>
+    <content:encoded><![CDATA[<p>Full article body here, quite long.</p>]]></content:encoded>
+  </item>
+  <item>
+    <title><![CDATA[A Second Post]]></title>
+    <description><![CDATA[deck only, no body]]></description>
+    <link>https://www.kasurian.com/second-post/</link>
+    <guid isPermaLink="false">6a5b658274803a00011eaeec</guid>
+    <dc:creator><![CDATA[A Guest]]></dc:creator>
+    <pubDate>Mon, 29 Jun 2026 09:00:00 GMT</pubDate>
+  </item>
+</channel>
+</rss>

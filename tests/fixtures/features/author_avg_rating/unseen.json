@@ -1,0 +1,15 @@
+{
+  "item": {
+    "authors": [
+      {
+        "name": "Jane Doe",
+        "role": "author"
+      }
+    ]
+  },
+  "ctx": {
+    "archive": [],
+    "stack": [],
+    "trash": []
+  }
+}

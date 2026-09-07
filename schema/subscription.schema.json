@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/bombaycyber/tjvz/main/schema/subscription.schema.json",
+  "title": "tjvz subscriptions.yaml",
+  "description": "The RSS/Atom feeds tjvz fetches. `tjvz sub add <url>` appends an entry (prompting for kind + persist). `kind` and `persist` have no default - a missing one is a load error, not a guess.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["feeds"],
+  "properties": {
+    "feeds": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "url", "kind", "persist"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]*$",
+            "description": "unique; written into item.source.feed_id"
+          },
+          "url": { "type": "string", "format": "uri" },
+          "kind": {
+            "type": "string",
+            "enum": ["publication", "author", "reader", "topic"],
+            "description": "how to read the feed. publication: pub <- channel title. author: pub <- item host, author fixed. reader: pub <- item host, each item also becomes a readers[] signal. topic: pub <- item host, requires apply_tags (the venue is incidental)."
+          },
+          "persist": {
+            "oneOf": [
+              { "type": "string", "enum": ["forever"] },
+              { "type": "integer", "minimum": 0 }
+            ],
+            "description": "how long an unjudged item stays in the feed. forever = until judged. <N> = N days from first_seen, then dropped silently (not a dismissal). 0 = never queued, ranked live from cache each fetch."
+          },
+          "apply_tags": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "stamp these tags onto every item from this feed. Required in spirit for kind: topic."
+          },
+          "max_items": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "intake cap - take at most the N newest new items per fetch, drop the rest. Optional; default: no cap."
+          },
+          "paused": { "type": "boolean", "description": "keep the entry, skip it on fetch" },
+          "fetch_page": { "type": "boolean", "description": "fetch the full article page instead of the feed's own text (opt-in; not v0)" }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/bombaycyber/tjvz/main/schema/feature-manifest.schema.json",
+  "title": "tjvz feature manifest",
+  "description": "The declarative contract for one feature. Lives as a MANIFEST dict in src/tjvz/features/<id>.py next to compute()/explain(). A feature is f(item, ctx, params) -> a real number; the model combines features as a plain bias + sum(w_i * f_i), no normalisation layer, so a feature keeps its own output at a sensible scale by convention (a naturally-unbounded feature applies its own saturate() inside compute()). `tjvz verify` validates this manifest and runs every `check`. Feature values are recomputed on demand (leave-one-out, as-of the decision timestamp) and cached under .tjvz/ - never stored on item records or events. See schema/ctx.md for `ctx`.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "kind", "version", "since", "description", "needs", "params", "checks"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*$",
+      "description": "Stable across versions. Changing compute() or a param default bumps `version` under the same id and triggers `tjvz features recompute`."
+    },
+    "kind": { "type": "string", "enum": ["feature"] },
+    "version": { "type": "integer", "minimum": 1 },
+    "since": { "type": "string", "description": "ISO date this version became active." },
+    "description": { "type": "string", "minLength": 1 },
+    "expands": {
+      "type": "boolean",
+      "description": "true = a column-group feature (e.g. reader_recs): exposes columns(item, ctx, params) -> {sub_id: value} instead of compute(), and gets no config weight - one weight per sub_id (id:sub_id) is learned, prior 0. Default false."
+    },
+    "needs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["item", "archive", "stack", "trash", "events", "readers", "text", "clusters", "idf", "config"]
+      },
+      "description": "Which ctx members compute() reads. The runtime builds only what some active feature needs."
+    },
+    "params": {
+      "type": "object",
+      "description": "Fixed structural knobs (v1: not gradient-fit). config.yaml's model.features.<id>.params overrides these defaults. An outer tuning loop may search them later; some are pinned value-judgements that are never tuned.",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["type", "default"],
+        "properties": {
+          "type": { "type": "string", "enum": ["number", "integer", "boolean", "string"] },
+          "default": {},
+          "description": { "type": "string" },
+          "tunable": { "type": "boolean", "description": "May the outer tuning loop search this? Default false." }
+        }
+      }
+    },
+    "checks": {
+      "type": "array",
+      "minItems": 1,
+      "description": "Golden cases. For each: load the fixture, run compute(item, ctx, params) with `params` merged over the manifest defaults, assert |result - expect| <= tol. `tjvz verify` also asserts the result is finite and warns if a feature's outputs are wildly scaled.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "fixture", "expect"],
+        "properties": {
+          "name": { "type": "string" },
+          "fixture": {
+            "type": "string",
+            "description": "Path under tests/fixtures/ to a JSON file shaped {item: {...}, ctx: {...}, params: {...}?}. ctx carries only the members this feature `needs`."
+          },
+          "params": { "type": "object", "description": "Per-check overrides of the manifest param defaults." },
+          "expect": {
+            "type": ["number", "object"],
+            "description": "Expected compute() output (number), or expected columns() output (object {sub_id: value}) for an `expands` feature."
+          },
+          "tol": { "type": "number", "default": 1e-6 }
+        }
+      }
+    },
+    "supersedes": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "description": "The prior version this replaces, for the recompute/audit ledger. null for v1.",
+      "properties": {
+        "id": { "type": "string" },
+        "version": { "type": "integer" }
+      }
+    }
+  }
+}
