@@ -434,7 +434,8 @@ def cmd_stack(args) -> dict:
     lines = [f"  {i:>2}  {_clip(it['title'], 50):<50}  {_clip(it['publication'], 18):<18}   {it['id']}"
              for i, it in enumerate(items, 1)]
     return {"_text": "\n".join(lines) or "(the stack is empty — `tjvz promote <id>`)",
-            "stack": [{"id": it["id"], "title": it["title"], "publication": it["publication"]}
+            "stack": [{"id": it["id"], "title": it["title"], "publication": it["publication"],
+                       "url": it.get("url"), "authors": it["authors"], "format": it["format"]}
                       for it in items]}
 
 
