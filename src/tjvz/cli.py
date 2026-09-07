@@ -379,6 +379,7 @@ def cmd_feed(args) -> dict:
         "_text": text,
         "feed": [{"rank": i, "id": r.item["id"], "score": round(r.score, 4),
                   "title": r.item["title"], "publication": r.item["publication"],
+                  "url": r.item.get("url"), "format": r.item["format"], "tags": r.item["tags"],
                   "is_new": r.is_new, "first_seen": r.first_seen,
                   "terms": r.explanation["terms"]}
                  for i, r in enumerate(shown, 1)],
