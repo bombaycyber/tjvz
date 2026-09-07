@@ -110,12 +110,14 @@ vs the live registry tells `tjvz model status` when the model is stale.
 | `pub_avg_rating` | same, for `item.publication` | ~[−1, 5] |
 | `author_familiarity` | `saturate(#judged items by this author)` — exposure, orthogonal to quality; pinned negative weight → mild novelty preference (crude feature-value-uncertainty exploration) | [0, 1) |
 | `pub_familiarity` | same, for the publication | [0, 1) |
-| `reader_recs` | **column-group** (`expands: true`) — one column per reader on the item, value = their 1–5 rating; the model learns a weight `w_R` per reader (`reader_recs:<source>`), prior 0, outer weight fixed at 1. Contributes 0 until `kind: reader` feeds populate `readers[]` and a learn run moves some `w_R`. | Σ wᵣ·rᵣ |
+| `reader_overlap` | `saturate(count of your archive items this item's reader source(s) have also read)`, max over readers — a collaborative-filtering cold-start reputation, **positive** (not pinned). Gives a high-overlap reader a push before `reader_recs` has any events. | [0, 1) |
+| `reader_recs` | **column-group** (`expands: true`) — one column per reader on the item, value = their 1–5 rating; the model learns a weight `w_R` per reader (`reader_recs:<source>`), prior `default_weight` (**0.5** — you followed them), outer weight fixed at 1. A reader you have never judged still scores at 0.5·rating; a learn run then moves `w_R` per your judgements. | Σ wᵣ·rᵣ |
 
 A **column-group** feature ships `columns(item, ctx, params) → {sub_id:
-value}` instead of `compute()`, gets no config weight (`reader_recs: {}`),
-and the model expands it to one learned weight per `sub_id`. Optional hand-
-set priors/pins: `config` `model.scoring.features.reader_recs.readers.<source>`.
+value}` instead of `compute()`, gets no config weight (only
+`default_weight`), and the model expands it to one learned weight per
+`sub_id`. Optional hand-set priors/pins: `config`
+`model.scoring.features.reader_recs.readers.<source>`.
 
 **Learning** — `LinearModel.learn(rows)` (`config` `model.learning`, omit to
 never run one). `utility` `log_odds` (predict read; v1) or `ev` (predict
@@ -168,7 +170,7 @@ re-broadcast** — see the last section.
 
 Others' signals — from a friend's broadcast feed or an AI drop. Keyed by
 `source` (re-ingest updates the entry). Kept strictly separate from your
-own `rating`. The substrate for `reader_avg_rating` (feature 4).
+own `rating`. The substrate for `reader_recs` and `reader_overlap`.
 
 ```json
 { "source": "birkar", "rating": 5, "blurb": "…", "at": "2026-05-10" }

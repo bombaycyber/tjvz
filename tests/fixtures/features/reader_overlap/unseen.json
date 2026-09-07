@@ -1,0 +1,7 @@
+{
+  "item": { "readers": [{ "source": "bob" }] },
+  "ctx": { "archive": [
+    { "readers": [{ "source": "alice" }] },
+    { "readers": [] }
+  ] }
+}

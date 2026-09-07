@@ -80,7 +80,8 @@ class LinearModel:
 
         # column-group features (manifest `expands: true`, e.g. reader_recs) have
         # no config weight — they expand to one weight per sub-id (reader_recs:<id>)
-        # at learn time, prior 0.
+        # at learn time, prior = the feature's `default_weight` (0.5 for
+        # reader_recs) unless a per-source entry overrides it.
         self.groups: set[str] = set()
         try:
             import tjvz.features as _F
@@ -105,6 +106,13 @@ class LinearModel:
                 if spec.get("pinned"):
                     self.pinned.add(col)
 
+        # a per-column weight for a group feature with no `readers` entry
+        # defaults to `default_weight` (0.5 for reader_recs — following
+        # someone is itself a signal of trust). The learner shrinks toward it.
+        self.group_default = {
+            g: float(sc["features"][g].get("default_weight", 0.5)) for g in self.groups
+        }
+
         self.prior_weights = dict(self.weights)
         self.bias = float(sc.get("bias", 0.0))
         self.learning = model_cfg.get("learning")
@@ -114,8 +122,23 @@ class LinearModel:
 
     # --- scoring ---------------------------------------------------------------
 
+    def _w(self, col: str) -> float:
+        """The weight for a column — a group feature's `default_weight` stands
+        in for an unconfigured per-column (reader) weight."""
+        if col in self.weights:
+            return self.weights[col]
+        head = col.split(":", 1)[0]
+        if col not in self.pinned and head in self.groups:
+            return self.group_default.get(head, 0.0)
+        return 0.0
+
+    def _cols(self, feats: dict) -> set[str]:
+        cols = set(self.weights)
+        cols.update(k for k in feats if ":" in k and k.split(":", 1)[0] in self.groups)
+        return cols
+
     def score(self, feats: dict) -> float:
-        return self.bias + sum(w * float(feats.get(k, 0.0)) for k, w in self.weights.items())
+        return self.bias + sum(self._w(k) * float(feats.get(k, 0.0)) for k in self._cols(feats))
 
     def explain(self, feats: dict) -> dict:
         keys = list(self.weights) + [k for k in feats if k not in self.weights]
@@ -123,8 +146,8 @@ class LinearModel:
             {
                 "feature": k,
                 "value": round(float(feats.get(k, 0.0)), 4),
-                "weight": round(self.weights.get(k, 0.0), 4),
-                "contribution": round(self.weights.get(k, 0.0) * float(feats.get(k, 0.0)), 4),
+                "weight": round(self._w(k), 4),
+                "contribution": round(self._w(k) * float(feats.get(k, 0.0)), 4),
             }
             for k in keys
         ]
@@ -143,10 +166,7 @@ class LinearModel:
             raise NotImplementedError(f"utility {util!r} not implemented (v1: log_odds only)")
 
         pos = {_ALIAS.get(k, k) for k in self.learning.get("label", {}).get("positive", ["read", "stack"])}
-        group_cols = sorted({
-            k for r in rows for k in r["features"]
-            if ":" in k and k.split(":", 1)[0] in self.groups and k not in self.pinned
-        })
+        group_cols = self._group_cols(rows)
         free = [f for f in self.feat_ids if f not in self.pinned] + group_cols
 
         y = self._labels(rows, pos)
@@ -154,7 +174,7 @@ class LinearModel:
         n_neg = len(y) - n_pos
 
         w_free, bias = self._newton(rows, y, free)
-        weights = dict(self.prior_weights)
+        weights = {**self.prior_weights, **self._prior_map(free)}
         weights.update(dict(zip(free, w_free)))
 
         adopt = self.learning.get("adopt", {})
@@ -181,10 +201,19 @@ class LinearModel:
     def _labels(self, rows, pos) -> list[int]:
         return [1 if _ALIAS.get(r["decision"], r["decision"]) in pos else 0 for r in rows]
 
+    def _group_cols(self, rows) -> list[str]:
+        return sorted({
+            k for r in rows for k in r["features"]
+            if ":" in k and k.split(":", 1)[0] in self.groups and k not in self.pinned
+        })
+
+    def _prior_map(self, free) -> dict[str, float]:
+        return {c: self._w(c) for c in (set(free) | self.pinned)}
+
     def _newton(self, rows, y, free, max_iter: int = 50) -> tuple[list[float], float]:
         n = len(y)
         d = len(free)
-        prior = [self.prior_weights.get(f, 0.0) for f in free]
+        prior = [self._w(f) for f in free]
         pin = [(f, self.prior_weights[f]) for f in self.pinned]
 
         reg = self.learning.get("regularization") or {}
@@ -259,10 +288,10 @@ class LinearModel:
             if not test or not train:
                 continue
             if prior:
-                w, b = dict(self.prior_weights), self.bias
+                w, b = self._prior_map(free), self.bias
             else:
                 wf, b = self._newton(train, self._labels(train, pos), free)
-                w = {**self.prior_weights, **dict(zip(free, wf))}
+                w = {**self._prior_map(free), **dict(zip(free, wf))}
             yhat = [
                 _sigmoid(b + sum(wv * float(r["features"].get(kk, 0.0)) for kk, wv in w.items()))
                 for r in test

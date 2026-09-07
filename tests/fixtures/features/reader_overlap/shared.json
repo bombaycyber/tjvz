@@ -1,0 +1,11 @@
+{
+  "item": { "readers": [{ "source": "bob", "rating": 4 }, { "source": "alice" }] },
+  "ctx": { "archive": [
+    { "readers": [{ "source": "bob" }] },
+    { "readers": [{ "source": "bob" }] },
+    { "readers": [{ "source": "bob" }, { "source": "alice" }] },
+    { "readers": [{ "source": "bob" }] },
+    { "readers": [{ "source": "bob" }] },
+    { "readers": [{ "source": "alice" }] }
+  ] }
+}

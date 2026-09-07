@@ -19,9 +19,10 @@
             "type": "object",
             "additionalProperties": false,
             "properties": {
-              "weight": { "type": "number", "description": "prior coefficient in the linear combine. Required for a scalar feature; omitted for a column-group feature (manifest expands:true), whose per-column weights are learned with prior 0 and outer weight fixed at 1." },
+              "weight": { "type": "number", "description": "prior coefficient in the linear combine. Required for a scalar feature; omitted for a column-group feature (manifest expands:true), whose per-column weights are learned and the outer weight is fixed at 1." },
               "params": { "type": "object", "description": "override the feature manifest's default structural knobs" },
               "pinned": { "type": "boolean", "description": "true -> never learned away from this weight (lambda -> inf on the coordinate). Default false." },
+              "default_weight": { "type": "number", "description": "column-group feature only (reader_recs): the prior weight for a per-column (per-reader) weight with no entry in `readers` — AI sources (ai:*) included. Default 0.5: following someone is itself a signal of trust; the learner shrinks toward this, not 0." },
               "readers": {
                 "type": "object",
                 "description": "column-group feature only (reader_recs): hand-set prior weight / pin per reader source. Learned per-reader weights live in model.json; these are the priors a learn run shrinks toward (default 0, unpinned). Readers with no entry here (incl. AI sources) still get a learned weight with prior 0.",

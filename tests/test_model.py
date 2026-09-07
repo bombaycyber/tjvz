@@ -82,6 +82,14 @@ def test_learn_fits_per_reader_weights():
     }
     m = LinearModel(cfg)
     assert m.groups == {"reader_recs"}
+    assert m.group_default == {"reader_recs": 0.5}         # "you followed them" prior
+
+    # a reader with no judgements at all is not in weights, but still scores at
+    # the 0.5 prior — following someone already tilts their picks up
+    assert "reader_recs:ghost" not in m.weights
+    assert m._w("reader_recs:ghost") == 0.5
+    assert m.score({"reader_recs:ghost": 4.0}) == 2.0
+
     rng = random.Random(2)
     rows = []
     for i in range(160):
@@ -97,8 +105,10 @@ def test_learn_fits_per_reader_weights():
             },
         })
     res = m.learn(rows)
-    assert res.weights["reader_recs:trusty"] > 0.3, res.weights
-    assert abs(res.weights["reader_recs:flaky"]) < 0.25, res.weights
+    # with real data the prior is overridden: trusty rewarded, flaky pulled toward 0
+    assert res.weights["reader_recs:trusty"] > 0.6, res.weights
+    assert res.weights["reader_recs:flaky"] < 0.25, res.weights
+    assert res.weights["reader_recs:trusty"] - res.weights["reader_recs:flaky"] > 0.5
     # score() uses the learned per-reader weights
     m.weights = res.weights
     hi = m.score({"reader_recs:trusty": 5.0})

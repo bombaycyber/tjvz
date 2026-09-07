@@ -3,11 +3,14 @@
 For an item, one column per reader with a signal on it (from a `kind:
 reader` subscription or an AI drop), column value = that reader's 1-5
 rating (or `v_surfaced` when they surfaced it without rating). `learn()`
-fits a per-reader weight `w_R` (id `reader_recs:<source>`), prior 0, no box,
-ordinary annealed shrinkage — a reader you've barely seen stays at ~0. The
-score contribution is `Σ_R w_R · rating_R`; the outer model weight is fixed
-at 1 (do NOT give `reader_recs` a weight in config). Contributes 0 until
-reader feeds populate `readers[]` and a learn run has moved some `w_R`.
+fits a per-reader weight `w_R` (id `reader_recs:<source>`), no box, ordinary
+annealed shrinkage toward its **prior**: `default_weight` (0.5 by default —
+you followed them, so their picks tilt up) unless
+`config.yaml model.scoring.features.reader_recs.readers.<source>` overrides
+it. The score contribution is `Σ_R w_R · rating_R`; the outer model weight
+is fixed at 1 (do NOT give `reader_recs` a `weight` in config). A reader you
+have never judged still scores at `default_weight`; `reader_overlap` adds
+the "their archive looks like mine" cold-start bonus on top.
 """
 from __future__ import annotations
 

@@ -22,7 +22,9 @@ model:
       pub_avg_rating:     { weight: 0.2 }                        # -1..5
       author_familiarity: { weight: -0.5, pinned: true }         # [0,1) exploration dial
       pub_familiarity:    { weight: -0.25, pinned: true }        # [0,1) exploration dial
-      reader_recs:        {}                                     # column-group: 0 until reader feeds + a learn run
+      reader_overlap:     { weight: 0.5 }                        # [0,1) shared reads with a reader you follow
+      reader_recs:        { default_weight: 0.5 }                # column-group; 0.5 = "you followed them" prior per reader
+      #   readers: { alice: { weight: 0.8 }, hn: { weight: 0.2 } }   # hand-set a per-reader prior / pin
     bias: 0.0
     stochastic: false     # true → score() samples per pass (a future Thompson variant)
 

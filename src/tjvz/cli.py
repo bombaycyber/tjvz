@@ -31,7 +31,8 @@ model:
       pub_avg_rating:     { weight: 0.2 }
       author_familiarity: { weight: -0.5, pinned: true }
       pub_familiarity:    { weight: -0.25, pinned: true }
-      reader_recs:        {}
+      reader_overlap:     { weight: 0.5 }
+      reader_recs:        { default_weight: 0.5 }
     bias: 0.0
   learning:
     utility: log_odds
